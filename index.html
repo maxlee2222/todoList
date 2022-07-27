@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HW0</title>
+</head>
+
+<style>
+
+</style>
+
+<body>
+
+    <div>
+        <h1>Todolist</h1>
+        <input type="text" id="content-input">
+        <button id="create">Create</button>
+        <h3>the following three button can filter jobs that is finished or not</h3>
+        <button id="allJob">All</button>
+        <button id="finishedJob">Finished</button>
+        <button id="unfinishedJob">Unfinished</button>
+    </div>
+
+    <ul id="todoArea">
+    </ul>
+</body>
+
+<script>
+
+    const todoList = []
+
+    window.onload = function() {
+        const sessionTodos = sessionStorage.getItem('todoList')
+        if (sessionTodos) {
+            const sessionTodoList = JSON.parse(sessionTodos)
+            sessionTodoList.forEach((todoObj, index, arr) =>{
+                todoList.push(todoObj)
+            })
+        }
+        document.getElementById('allJob').click()
+    }
+
+    document.getElementById('allJob').addEventListener('click', (e) => {
+        const todoArea = document.getElementById('todoArea')
+        todoArea.innerHTML = ''
+
+        todoList.forEach((todoObj, index, arr) => {
+            const liNode = generateNode(todoObj)
+            todoArea.appendChild(liNode)
+        })
+    })
+
+    document.getElementById('finishedJob').addEventListener('click', (e) => {
+        const todoArea = document.getElementById('todoArea')
+        todoArea.innerHTML = ''
+
+        todoList.filter(todoObj => todoObj.isFinished).forEach((todoObj, index, arr) => {
+            const liNode = generateNode(todoObj)
+            todoArea.appendChild(liNode)
+        })
+    })
+
+    document.getElementById('unfinishedJob').addEventListener('click', (e) => {
+        const todoArea = document.getElementById('todoArea')
+        todoArea.innerHTML = ''
+
+        todoList.filter(todoObj => !todoObj.isFinished).forEach((todoObj, index, arr) => {
+            const liNode = generateNode(todoObj)
+            todoArea.appendChild(liNode)
+        })
+    })
+
+    document.getElementById('create').addEventListener('click', (e) => {
+        create()
+    })
+
+    function create() {
+        const newContent = document.getElementById('content-input').value
+        if (!newContent) {
+            return
+        }
+        const uuid = uuidv4()
+        const todoObj = {
+            uuid: uuid,
+            content: newContent,
+            isFinished: false,
+        }
+        const liNode = generateNode(todoObj)
+        document.getElementById("todoArea").appendChild(liNode)
+        todoList.push(todoObj)
+        sessionStorage.setItem('todoList', JSON.stringify(todoList))
+        document.getElementById('content-input').value = ''
+    }
+
+    function remove(elementId) {
+        document.getElementById(elementId).remove()
+
+        var index = todoList.length;
+        while (index--) {
+            if (todoList[index].uuid === elementId) {
+                todoList.splice(index, 1);
+                break;
+            }
+        }
+        sessionStorage.setItem('todoList', JSON.stringify(todoList))
+    }
+
+    function finish(elementId) {
+        document.getElementById(elementId).querySelector('.content').style.textDecoration = 'line-through'
+        var index = todoList.length;
+        while (index--) {
+            if (todoList[index].uuid === elementId) {
+                todoList[index].isFinished = true
+                break;
+            }
+        }
+        sessionStorage.setItem('todoList', JSON.stringify(todoList))
+    }
+
+    function edit(elementId) {
+        const ele = document.getElementById(elementId)
+        const editInput = ele.querySelector('.edit-input')
+        if (editInput.value) {
+            ele.querySelector('.content').textContent = editInput.value
+
+            var index = todoList.length;
+            while (index--) {
+                if (todoList[index].uuid === elementId) {
+                    todoList[index].content = editInput.value
+                    break;
+                }
+            }
+            sessionStorage.setItem('todoList', JSON.stringify(todoList))
+            editInput.value = ''
+        }
+    }
+
+    function generateNode(todoObj) {
+        const liNode = document.createElement('li')
+        liNode.setAttribute('id', todoObj.uuid)
+
+        const contentNode = document.createElement('span')
+        contentNode.textContent = todoObj.content
+        if (todoObj.isFinished) {
+            contentNode.style.textDecoration = 'line-through'
+        }
+        contentNode.setAttribute('class', 'content')
+
+        const removeNode = document.createElement('button')
+        removeNode.textContent = 'Remove'
+        removeNode.setAttribute('class', 'remove')
+        removeNode.addEventListener('click', (e) => {
+            remove(todoObj.uuid)
+        })
+
+        const finishNode = document.createElement('button')
+        finishNode.textContent = 'Finish'
+        finishNode.setAttribute('class', 'finish')
+        finishNode.addEventListener('click', (e) => {
+            finish(todoObj.uuid)
+        })
+
+        const editInputNode = document.createElement('input')
+        editInputNode.setAttribute('class', 'edit-input')
+
+        const editNode = document.createElement('button')
+        editNode.textContent = 'Edit'
+        editNode.setAttribute('class', 'edit')
+        editNode.addEventListener('click', (e) => {
+            edit(todoObj.uuid)
+        })
+
+        liNode.appendChild(contentNode)
+        liNode.appendChild(removeNode)
+        liNode.appendChild(finishNode)
+        liNode.appendChild(editInputNode)
+        liNode.appendChild(editNode)
+
+        return liNode
+    }
+
+    function uuidv4() {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        );
+    }
+
+</script>
+
+</html>
